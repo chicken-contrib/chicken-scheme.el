@@ -118,15 +118,22 @@ Argument MODULE-LIST The modules to extract symbols from."
         (setq symbols  (concat cleaned " " symbols))))
     (delete-dups (eval (read (concat "'(" symbols ")"))))))
 
+(defvar ac-chicken-symbols-candidates-cache nil)
 (defun ac-chicken-symbols-candidates ()
   "Use `chicken-ac-modules' to generate `auto-complete' candidates."
-  (delq nil
-        (mapcar '(lambda (s)
-                   (condition-case err
-                       (let ((n (symbol-name s)))
-                         (cons n n))
-                     (wrong-type-argument '())))
-                (chicken-load-symbols chicken-ac-modules))))
+  (if (or (equalp nil ac-chicken-symbols-candidates-cache)
+          (not (equalp chicken-ac-modules (car ac-chicken-symbols-candidates-cache))))
+      (setq ac-chicken-symbols-candidates-cache
+            `(,chicken-ac-modules 
+              . ,(delq nil
+                       (mapcar '(lambda (s)
+                                  (condition-case err
+                                      (let ((n (symbol-name s)))
+                                        (cons n n))
+                                    (wrong-type-argument '())))
+                               (chicken-load-symbols chicken-ac-modules))))))
+  (cdr ac-chicken-symbols-candidates-cache))
+(ac-chicken-symbols-candidates)
 
 (defun ac-chicken-doc (symbol-name)
   "Use chicken-doc to recover documentation for a given symbol.
@@ -135,8 +142,9 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
 
 (defun chicken-load-font-lock-keywords ()
   "Load chicken keywords into font-lock."
-  (interactive "r")
-  (add-font-lock-keywords '(scheme-mode) (chicken-load-symbols chicken-ac-modules)))
+  (interactive)
+  (add-font-lock-keywords '(scheme-mode) 
+                          (mapcar (lambda (p) (make-symbol (car p))) (ac-chicken-symbols-candidates))))
 
 (defvar ac-source-chicken-symbols
   '((candidates . ac-chicken-symbols-candidates)
@@ -157,18 +165,23 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
     (prefix . ,chicken-prefix)
     (cache)))
 
+(defun chicken-scheme-hook ()
+  "Hook for Chicken into scheme-mode."
+  (interactive)
+  (enable-paredit-mode)
+  (if chicken-scheme-tags-file
+      (chicken-load-tags scheme-tags-file))
+  (make-local-variable 'ac-sources)
+  (setq ac-sources
+        (append ac-sources '(ac-source-chicken-symbols
+                             ac-source-chicken-symbols-prefixed
+                             ac-source-words-in-buffer
+                             ac-source-words-in-same-mode-buffers)))
+  ;(chicken-load-font-lock-keywords)
+  )
+
 (add-hook 'scheme-mode-hook
-          '(lambda ()
-             (enable-paredit-mode)
-             (if chicken-scheme-tags-file
-                 (chicken-load-tags scheme-tags-file))
-             (make-local-variable 'ac-sources)
-             (setq ac-sources
-                   (append ac-sources '(ac-source-chicken-symbols
-                                        ac-source-chicken-symbols-prefixed
-                                        ac-source-words-in-buffer
-                                        ac-source-words-in-same-mode-buffers)))
-             (chicken-load-font-lock-keywords)))
+          'chicken-scheme-hook)
 
 (provide 'chicken-scheme)
 
