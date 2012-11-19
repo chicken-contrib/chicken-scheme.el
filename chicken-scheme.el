@@ -143,17 +143,19 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
     (symbol . "f")
-    (requires . 0)
-    (document . ac-chicken-doc)))
+    (requires . 2)
+    (document . ac-chicken-doc)
+    (cache)))
 
 (defvar ac-source-chicken-symbols-prefixed
   `((candidates . ac-chicken-symbols-candidates)
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
     (symbol . "f")
-    (requires . 0)
+    (requires . 2)
     (document . ac-chicken-doc)
-    (prefix . ,chicken-prefix)))
+    (prefix . ,chicken-prefix)
+    (cache)))
 
 (add-hook 'scheme-mode-hook
           '(lambda ()
