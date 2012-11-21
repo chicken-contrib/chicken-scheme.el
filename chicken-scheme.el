@@ -73,26 +73,6 @@
   "Face for the chicken scheme selected candidate."
   :group 'chicken-scheme)
 
-(defun add-font-lock-keywords (modes new-keywords)
-  "Add provided keywords to the current font-lock set.
-Argument MODES A list of modes in which to inject the keywords.
-Argument NEW-KEYWORDS A list of keywords to use for font-lock."
-  (mapc (lambda (mode)
-          (font-lock-add-keywords mode `((, (concat "(\\(" (regexp-opt (mapcar 'symbol-name (remove-if 'numberp new-keywords)) t) "\\)\\>")
-                                            (1 font-lock-keyword-face)))))
-        modes)
-  t)
-
-(defun remove-font-lock-keywords (modes new-keywords)
-  "Remove provided keywords from the current font-lock set.
-Argument MODES A list of modes from which to remove the keywords.
-Argument NEW-KEYWORDS A list of keywords to remove from font-lock."
-  (mapc (lambda (mode)
-          (font-lock-remove-keywords mode `((, (concat "(\\(" (regexp-opt (mapcar 'symbol-name (remove-if 'numberp new-keywords)) t) "\\)\\>")
-                                               (1 font-lock-keyword-face)))))
-        modes)
-  t)
-
 ;; Hardcoded r5rs-symbols
 (defvar r5rs-symbols '(abs acos and angle append apply asin assoc assq assv atan begin boolean? caar cadr call-with-current-continuation call-with-input-file call-with-output-file call-with-values car case cdddar cddddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? close-input-port close-output-port complex? cond cons cos current-input-port current-output-port define define-syntax delay denominator display do dynamic-wind else eof-object? eq? equal? eqv? eval even? exact->inexact exact? exp expt floor for-each force gcd if imag-part inexact->exact inexact? input-port? integer->char integer? interaction-environment lambda lcm length let let* let-syntax letrec letrec-syntax list list->string list->vector list-ref list-tail list? load log magnitude make-polar make-rectangular make-string make-vector map max member memq memv min modulo negative? newline not null-environment null? number->string number? numerator odd? open-input-file open-output-file or output-port? pair? peek-char port? positive? procedure? quasiquote quote quotient rational? rationalize read read-char real-part real? remainder reverse round scheme-report-environment set! set-car! set-cdr! setcar sin sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-length string-ref string-set! string<=? string<? string=? string>=? string>? string? substring symbol->string symbol? syntax-rules tan transcript-off transcript-on truncate values vector vector->list vector-fill! vector-length vector-ref vector-set! vector? with-input-from-file with-output-to-file write write-char zero?))
 
@@ -140,11 +120,44 @@ Argument MODULE-LIST The modules to extract symbols from."
 Argument SYMBOL-NAME The symbol to recover documentation for."
   (shell-command-to-string (format "chicken-doc %s" (substring-no-properties symbol-name))))
 
+(defconst chicken-scheme-font-lock-keywords
+   '() 
+   "Extended highlighting for Scheme modes using Chicken keywords.")
+
 (defun chicken-load-font-lock-keywords ()
   "Load chicken keywords into font-lock."
   (interactive)
-  (add-font-lock-keywords '(scheme-mode) 
-                          (mapcar (lambda (p) (make-symbol (car p))) (ac-chicken-symbols-candidates))))
+  (setq font-lock-defaults 
+         '((chicken-scheme-font-lock-keywords) 
+           nil ; don't do keywords-only
+           nil ; don't do case sensitive
+           (("+-*/.<>=!?$%_&~^:" . "w")) 
+           beginning-of-defun 
+           (font-lock-mark-block-function . mark-defun)
+           ))
+  (if (equalp nil chicken-scheme-font-lock-keywords)
+      (chicken-cache-font-lock-keywords)))
+
+(defun chicken-cache-font-lock-keywords ()
+  "Cache font-lock keywords for Chicken."
+  (setq chicken-scheme-font-lock-keywords
+        (append '()
+         scheme-font-lock-keywords-1
+         scheme-font-lock-keywords-2
+         (eval-when-compile
+           (let* ((kw (sort (mapcar (lambda (p) (car p)) (ac-chicken-symbols-candidates)) 'string<))
+                  (nkw (length kw))
+                  (step 100))
+             (loop
+              with result = '()
+              for ptr from 0 by step
+              while (< ptr nkw)
+              do
+              (let ((window (last (butlast kw (- nkw (+ ptr step))) step)))
+                (setq result (append result 
+                                     (list `(,(regexp-opt window t)  (1 font-lock-builtin-face))))))
+              finally
+              return result))))))
 
 (defvar ac-source-chicken-symbols
   '((candidates . ac-chicken-symbols-candidates)
@@ -168,6 +181,9 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
 (defun chicken-scheme-hook ()
   "Hook for Chicken into scheme-mode."
   (interactive)
+  (font-lock-mode)
+  (chicken-load-font-lock-keywords)
+  (font-lock-refresh-defaults)
   (enable-paredit-mode)
   (if chicken-scheme-tags-file
       (chicken-load-tags scheme-tags-file))
@@ -175,13 +191,13 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   (setq ac-sources
         (append ac-sources '(ac-source-chicken-symbols
                              ac-source-chicken-symbols-prefixed
-                             ac-source-words-in-buffer
-                             ac-source-words-in-same-mode-buffers)))
-  ;(chicken-load-font-lock-keywords)
+                             ac-source-words-in-buffer)))
   )
 
-(add-hook 'scheme-mode-hook
-          'chicken-scheme-hook)
+; Clear out the default scheme-mode-hook which breaks font-locking
+(setq scheme-mode-hook nil)
+(add-hook 'scheme-mode-hook 'chicken-scheme-hook)
+(add-hook 'scheme-mode-hook 'turn-on-font-lock)
 
 (provide 'chicken-scheme)
 
