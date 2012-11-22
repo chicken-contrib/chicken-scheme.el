@@ -52,7 +52,7 @@
   :type 'file
   :group 'chicken-scheme)
 
-(defcustom chicken-ac-modules '("chicken")
+(defcustom chicken-ac-modules (chicken-installed-modules)
   "Modules to load symbols from for `auto-complete'."
   :type '(repeat string)
   :group 'chicken-scheme)
@@ -84,7 +84,6 @@ Argument SCHEME-TAGS-LOCATION The tags file from which to extract the tags."
     (setq tags-table-list nil)
     (visit-tags-table scheme-tags-location)
     (tags-completion-table)
-    (add-font-lock-keywords '(scheme-mode inferior-scheme-mode) tags-completion-table)
     (setq tags-table-list existing-tags))
   t)
 
@@ -95,7 +94,8 @@ Argument MODULE-LIST The modules to extract symbols from."
     (dolist (module module-list)
       (let* ((output (shell-command-to-string (format "csi -q -w -e \"(use %s)\" -e \"(display (map car (##sys#macro-environment)))\" -e \"(display (##sys#environment-symbols (interaction-environment)))\"" module)))
              (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\)]+[^ ]*" "" output)))
-        (setq symbols  (concat cleaned " " symbols))))
+        (setq symbols  (concat cleaned " " symbols))
+        (message (format "Retrieved symbols from Chicken Module %s" module))))
     (delete-dups (eval (read (concat "'(" symbols ")"))))))
 
 (defvar ac-chicken-symbols-candidates-cache nil)
@@ -120,8 +120,7 @@ Argument MODULE-LIST The modules to extract symbols from."
 Argument SYMBOL-NAME The symbol to recover documentation for."
   (shell-command-to-string (format "chicken-doc %s" (substring-no-properties symbol-name))))
 
-(defconst chicken-scheme-font-lock-keywords
-   '() 
+(defconst chicken-scheme-font-lock-keywords '() 
    "Extended highlighting for Scheme modes using Chicken keywords.")
 
 (defun chicken-load-font-lock-keywords ()
@@ -140,6 +139,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
 
 (defun chicken-cache-font-lock-keywords ()
   "Cache font-lock keywords for Chicken."
+  (message "Caching Chicken font-lock-keywords")
   (setq chicken-scheme-font-lock-keywords
         (append '()
          scheme-font-lock-keywords-1
@@ -155,7 +155,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
               do
               (let ((window (last (butlast kw (- nkw (+ ptr step))) step)))
                 (setq result (append result 
-                                     (list `(,(regexp-opt window t)  (1 font-lock-builtin-face))))))
+                                     (list `(,(regexp-opt window 'symbols)  (1 font-lock-builtin-face))))))
               finally
               return result))))))
 
@@ -192,12 +192,9 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
         (append ac-sources '(ac-source-chicken-symbols
                              ac-source-chicken-symbols-prefixed
                              ac-source-words-in-buffer)))
-  )
+  (message "Chicken Scheme ready."))
 
-; Clear out the default scheme-mode-hook which breaks font-locking
-(setq scheme-mode-hook nil)
 (add-hook 'scheme-mode-hook 'chicken-scheme-hook)
-(add-hook 'scheme-mode-hook 'turn-on-font-lock)
 
 (provide 'chicken-scheme)
 
