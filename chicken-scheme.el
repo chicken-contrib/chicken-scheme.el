@@ -58,9 +58,10 @@
   :group 'chicken-scheme)
 
 (defcustom chicken-prefix
-  "[^:#]*[:#]\\(.*\\)"
-  "Defines the regex to use to identify the prefix separator that may be present for autocomplete matches.  Defaults to : and #."
-  :type 'regexp
+  ;"[^:#]*[:#]\\(.*\\)"
+  ":#"
+  "Defines the characters to use to identify the prefix separator that may be present for autocomplete matches.  Defaults to : and #."
+  :type 'string
   :group 'chicken-scheme)
 
 (defface ac-chicken-scheme-candidate-face
@@ -113,7 +114,6 @@ Argument MODULE-LIST The modules to extract symbols from."
                                     (wrong-type-argument '())))
                                (chicken-load-symbols chicken-ac-modules))))))
   (cdr ac-chicken-symbols-candidates-cache))
-(ac-chicken-symbols-candidates)
 
 (defun ac-chicken-doc (symbol-name)
   "Use chicken-doc to recover documentation for a given symbol.
@@ -127,10 +127,10 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   "Load chicken keywords into font-lock."
   (interactive)
   (setq font-lock-defaults 
-         '((chicken-scheme-font-lock-keywords) 
-           nil ; don't do keywords-only
+         `((chicken-scheme-font-lock-keywords) 
+           nil ; don't do strings and comments
            nil ; don't do case sensitive
-           (("+-*/.<>=!?$%_&~^:" . "w")) 
+           ((,(replace-regexp-in-string (concat "[" chicken-prefix "]") "a" "+-*/.<>=!?$%_&~^:") . "w")) 
            beginning-of-defun 
            (font-lock-mark-block-function . mark-defun)
            ))
@@ -155,7 +155,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
               do
               (let ((window (last (butlast kw (- nkw (+ ptr step))) step)))
                 (setq result (append result 
-                                     (list `(,(regexp-opt window 'symbols)  (1 font-lock-builtin-face))))))
+                                     (list `(,(regexp-opt window 'words)  (1 font-lock-builtin-face))))))
               finally
               return result))))))
 
@@ -175,7 +175,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
     (symbol . "f")
     (requires . 2)
     (document . ac-chicken-doc)
-    (prefix . ,chicken-prefix)
+    (prefix . ,(concat "[^" chicken-prefix "]*[" chicken-prefix "]\\(.*\\)"))
     (cache)))
 
 (defun chicken-scheme-hook ()
@@ -193,6 +193,17 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
                              ac-source-chicken-symbols-prefixed
                              ac-source-words-in-buffer)))
   (message "Chicken Scheme ready."))
+
+(defun chicken-show-help ()
+  "Show documentation for the symbol at the present point."
+  (interactive)
+  (message (ac-chicken-doc 
+            (replace-regexp-in-string 
+             (concat "[^" chicken-prefix "]*[" chicken-prefix "]+") 
+             "" 
+             (symbol-name (symbol-at-point))))))
+
+(define-key scheme-mode-map (kbd "C-?") 'chicken-show-help)
 
 (add-hook 'scheme-mode-hook 'chicken-scheme-hook)
 
