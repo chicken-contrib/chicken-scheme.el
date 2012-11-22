@@ -20,6 +20,24 @@
 ;; variables are available to configure from which modules symbols should be
 ;; loaded and what sort of package prefixes can be expected.
 ;;
+;; Auto-complete is configured to support prefixed symbols, to allow for
+;; full recognition of symbols in modules that may have been imported with a
+;; prefix modifier. The `chicken-prefix` variable may be customized to declare
+;; what characters can be used as prefix delimiters.
+;;
+;; C-? is bound in Scheme Modes to fetch documentation for the symbol at the
+;; current point. This obeys the prefix rules used for auto-complete.
+;;
+;; Further customization is available in the chicken-scheme customization group.
+;;
+;; Loading of the first scheme file may take some time as the Chicken Modules
+;; are parsed for symbols on first-load. All subsequent scheme files do not
+;; incur this load hitch. Consider running an Emacs daemon.
+;;
+;; Installation:
+;; Place in your load path. Add the following to your .emacs:
+;; (require 'chicken-scheme)
+;;
 ;; Tags are also supported. 
 
 (require 'paredit)
