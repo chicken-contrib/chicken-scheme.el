@@ -4,7 +4,7 @@
 ;; Author: Daniel Leslie 
 ;; dan@ironoxide.ca
 ;; URL: http://github.com/dleslie/chicken-scheme
-;; Version: 1.0.1
+;; Version: 1.0.2
 
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
@@ -215,6 +215,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
         (append ac-sources '(ac-source-chicken-symbols
                              ac-source-chicken-symbols-prefixed
                              ac-source-words-in-buffer)))
+  (ac-chicken-symbols-candidates) ; Cache at load
   (message "Chicken Scheme ready."))
 
 (defun chicken-show-help ()
