@@ -1,7 +1,8 @@
 ;;; chicken-scheme.el --- Scheme-mode extensions for Chicken Scheme
 
 ;; Copyright 2012 Daniel Leslie
-;; Author: Daniel Leslie dan@ironoxide.ca
+;; Author: Daniel Leslie 
+;; dan@ironoxide.ca
 ;; URL: http://github.com/dleslie/chicken-scheme
 ;; Version: 1.0.1
 
