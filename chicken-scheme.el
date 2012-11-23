@@ -34,13 +34,18 @@
 ;; are parsed for symbols on first-load. All subsequent scheme files do not
 ;; incur this load hitch. Consider running an Emacs daemon.
 ;;
+;; Tags are also supported. 
+;;
 ;; Installation:
 ;; Place in your load path. Add the following to your .emacs:
+;;
 ;; (require 'chicken-scheme)
 ;;
-;; Tags are also supported. 
+;; I recommend you also add the following:
+;;
+;; (add-hook 'scheme-mode-hook 'enable-paredit-mode)
+;; (add-hook 'scheme-mode-hook 'rainbow-delimiters-mode-enable)
 
-(require 'paredit)
 (require 'auto-complete)
 (require 'scheme)
 
@@ -202,7 +207,6 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   (font-lock-mode)
   (chicken-load-font-lock-keywords)
   (font-lock-refresh-defaults)
-  (enable-paredit-mode)
   (if chicken-scheme-tags-file
       (chicken-load-tags scheme-tags-file))
   (make-local-variable 'ac-sources)
