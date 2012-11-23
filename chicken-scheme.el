@@ -3,7 +3,7 @@
 ;; Copyright 2012 Daniel Leslie
 ;; Author: Daniel Leslie dan@ironoxide.ca
 ;; URL: http://github.com/dleslie/chicken-scheme
-;; Version: 1.0.0
+;; Version: 1.0.1
 
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
@@ -61,9 +61,9 @@
       (beginning-of-buffer)
       (while (re-search-forward "/\\([^/\.]+\\)\\.so" nil t)
         (when (match-string 0)
-          (if (and (not (equalp "chicken-doc" (match-string 1))) ; Doesn't play well with csi in emacs?
-                   (not (equalp "chicken-doc-text" (match-string 1)))
-                   (not (equalp "bind-translator" (match-string 1))))
+          (if (and (not (equal "chicken-doc" (match-string 1))) ; Doesn't play well with csi in emacs?
+                   (not (equal "chicken-doc-text" (match-string 1)))
+                   (not (equal "bind-translator" (match-string 1))))
               (push (match-string 1) modules)))))
     modules))
 
@@ -107,7 +107,7 @@ Argument SCHEME-TAGS-LOCATION The tags file from which to extract the tags."
   (let ((existing-tags tags-table-list))
     (setq tags-table-list nil)
     (visit-tags-table scheme-tags-location)
-    (tags-completion-table)
+    ;(tags-completion-table)
     (setq tags-table-list existing-tags))
   t)
 
@@ -125,16 +125,16 @@ Argument MODULE-LIST The modules to extract symbols from."
 (defvar ac-chicken-symbols-candidates-cache nil)
 (defun ac-chicken-symbols-candidates ()
   "Use `chicken-ac-modules' to generate `auto-complete' candidates."
-  (if (or (equalp nil ac-chicken-symbols-candidates-cache)
-          (not (equalp chicken-ac-modules (car ac-chicken-symbols-candidates-cache))))
+  (if (or (equal nil ac-chicken-symbols-candidates-cache)
+          (not (equal chicken-ac-modules (car ac-chicken-symbols-candidates-cache))))
       (setq ac-chicken-symbols-candidates-cache
             `(,chicken-ac-modules 
               . ,(delq nil
-                       (mapcar '(lambda (s)
-                                  (condition-case err
-                                      (let ((n (symbol-name s)))
-                                        (cons n n))
-                                    (wrong-type-argument '())))
+                       (mapcar #'(lambda (s)
+                                   (condition-case err
+                                       (let ((n (symbol-name s)))
+                                         (cons n n))
+                                     (wrong-type-argument '())))
                                (chicken-load-symbols chicken-ac-modules))))))
   (cdr ac-chicken-symbols-candidates-cache))
 
@@ -157,7 +157,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
            beginning-of-defun 
            (font-lock-mark-block-function . mark-defun)
            ))
-  (if (equalp nil chicken-scheme-font-lock-keywords)
+  (if (equal nil chicken-scheme-font-lock-keywords)
       (chicken-cache-font-lock-keywords)))
 
 (defun chicken-cache-font-lock-keywords ()
@@ -208,7 +208,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   (chicken-load-font-lock-keywords)
   (font-lock-refresh-defaults)
   (if chicken-scheme-tags-file
-      (chicken-load-tags scheme-tags-file))
+      (chicken-load-tags chicken-scheme-tags-file))
   (make-local-variable 'ac-sources)
   (setq ac-sources
         (append ac-sources '(ac-source-chicken-symbols
