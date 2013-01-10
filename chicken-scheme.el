@@ -123,7 +123,7 @@ Argument MODULE-LIST The modules to extract symbols from."
         (message (format "Retrieved symbols from Chicken Module %s" module))))
     (delete-dups (eval (read (concat "'(" symbols ")"))))))
 
-(defvar ac-chicken-symbols-candidates-cache nil)
+(defvar ac-chicken-symbols-candidates-cache '())
 (defun ac-chicken-symbols-candidates ()
   "Use `chicken-ac-modules' to generate `auto-complete' candidates."
   (if (or (equal nil ac-chicken-symbols-candidates-cache)
@@ -188,7 +188,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
     (symbol . "f")
-    (requires . 2)
+    (requires . 3)
     (document . ac-chicken-doc)
     (cache)))
 
@@ -197,9 +197,9 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
     (symbol . "f")
-    (requires . 2)
+    (requires . 3)
     (document . ac-chicken-doc)
-    (prefix . ,(concat "[^" chicken-prefix "]*[" chicken-prefix "]\\(.*\\)"))
+    (prefix . ,(concat "[^ \t\r\n" chicken-prefix "]*[" chicken-prefix "]\\(.*\\)"))
     (cache)))
 
 (defun chicken-scheme-hook ()
@@ -212,10 +212,11 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
       (chicken-load-tags chicken-scheme-tags-file))
   (make-local-variable 'ac-sources)
   (setq ac-sources
-        (append ac-sources '(ac-source-chicken-symbols
-                             ac-source-chicken-symbols-prefixed
-                             ac-source-words-in-buffer)))
-  (ac-chicken-symbols-candidates) ; Cache at load
+        (append ac-sources
+                '(ac-source-chicken-symbols
+                  ac-source-chicken-symbols-prefixed
+                  ac-source-words-in-buffer
+                  )))
   (message "Chicken Scheme ready."))
 
 (defun chicken-show-help ()
