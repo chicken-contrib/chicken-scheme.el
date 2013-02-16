@@ -3,7 +3,7 @@
 ;; Copyright 2012 Daniel Leslie
 ;; Author: Daniel Leslie <dan@ironoxide.ca>
 ;; URL: http://github.com/dleslie/chicken-scheme
-;; Version: 1.0.3
+;; Version: 1.0.4
 
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
@@ -55,7 +55,7 @@
   "Use chicken-status to discover all installed Chicken modules."
   (interactive "r")
   (let ((default-directory "~/")
-        modules)
+        (modules '("srfi-1" "srfi-4" "srfi-13" "srfi-14" "srfi-18" "srfi-69" "lolevel" "tcp" "ports" "extras" "data-structures" "files" "foreign" "irregex" "library" "posix" "utils")))
     (with-temp-buffer
       (insert (shell-command-to-string "chicken-status -files"))
       (beginning-of-buffer)
@@ -116,10 +116,13 @@ Argument SCHEME-TAGS-LOCATION The tags file from which to extract the tags."
 Argument MODULE-LIST The modules to extract symbols from."
   (let ((symbols))
     (dolist (module module-list)
-      (let* ((output (shell-command-to-string (format "csi -q -w -e \"(use %s)\" -e \"(display (map car (##sys#macro-environment)))\" -e \"(display (##sys#environment-symbols (interaction-environment)))\"" module)))
-             (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\)]+[^ ]*" "" output)))
-        (setq symbols  (concat cleaned " " symbols))
+      (let* ((output (shell-command-to-string (format "csi -q -w -e \"(use %s)(display (map car (##sys#macro-environment)))(display (map car (##sys#current-environment)))\"" module)))
+             (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\),'`<>:]+[^ ]*" "" output)))
+        (setq symbols (concat cleaned " " symbols))
         (message (format "Retrieved symbols from Chicken Module %s" module))))
+    ;; (message (concat "'(" symbols ")"))
+    ;; (dolist (symbol (split-string symbols))
+    ;;   (message symbol))
     (delete-dups (eval (read (concat "'(" symbols ")"))))))
 
 (defvar ac-chicken-symbols-candidates-cache '())
