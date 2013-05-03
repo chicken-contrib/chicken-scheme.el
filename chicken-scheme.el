@@ -1,12 +1,16 @@
 ;;; chicken-scheme.el --- Scheme-mode extensions for Chicken Scheme
 
-;; Copyright 2012 Daniel Leslie
+;; Copyright 2013 Daniel Leslie
 ;; Author: Daniel Leslie <dan@ironoxide.ca>
 ;; URL: http://github.com/dleslie/chicken-scheme
-;; Version: 1.0.4
+;; Version: 1.0.6
 
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
+
+;;; Contributors:
+;; Dan Leslie
+;; Mao Junhua - Disk Caching
 
 ;;; Commentary:
 ;; A suite of extensions for scheme-mode that grew out of necessity.
@@ -46,10 +50,36 @@
 ;; (add-hook 'scheme-mode-hook 'enable-paredit-mode)
 ;; (add-hook 'scheme-mode-hook 'rainbow-delimiters-mode-enable)
 
+
 (require 'auto-complete)
 (require 'scheme)
 
 ;;; Code:
+
+(defun chicken-dump-vars-to-file (varlist filename)
+  "simplistic dumping of variables in VARLIST to a file FILENAME"
+  (save-excursion
+    (let ((buf (find-file-noselect filename)))
+      (set-buffer buf)
+      (erase-buffer)
+      (chicken-dump-vars varlist buf)
+      (save-buffer)
+      (kill-buffer))))
+
+(defun chicken-dump-vars (varlist buffer)
+  "insert into buffer the setq statement to recreate the variables in VARLIST"
+  (loop for var in varlist do
+        (print (list 'setq var (list 'quote (symbol-value var)))
+               buffer)))
+               
+(defun chicken-remove-error-module (module-list)    
+;   (setq del-list '("library" "foreign" "iup" "iup-glcanvas" "iup-pplot" "iup-dialogs" "iup-controls" "iup-base" "canvas-draw-iup" "canvas-draw-gl"))
+    (setq del-list '("library" "foreign"))
+;   (setq del-list '())
+    (dolist (del-elem del-list)
+      (delete del-elem module-list)))
+                       
+(provide 'my-elisp)
 
 (defun chicken-installed-modules ()
   "Use chicken-status to discover all installed Chicken modules."
@@ -115,14 +145,20 @@ Argument SCHEME-TAGS-LOCATION The tags file from which to extract the tags."
   "Load symbols from Chicken.
 Argument MODULE-LIST The modules to extract symbols from."
   (let ((symbols))
-    (dolist (module module-list)
-      (let* ((output (shell-command-to-string (format "csi -q -w -e \"(use %s)(display (map car (##sys#macro-environment)))(display (map car (##sys#current-environment)))\"" module)))
-             (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\),'`<>:]+[^ ]*" "" output)))
-        (setq symbols (concat cleaned " " symbols))
-        (message (format "Retrieved symbols from Chicken Module %s" module))))
-    ;; (message (concat "'(" symbols ")"))
-    ;; (dolist (symbol (split-string symbols))
-    ;;   (message symbol))
+    (chicken-remove-error-module module-list)
+    (if (file-exists-p "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el")
+      (progn
+          (message "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el exist, load it.")
+          (load "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el"))
+      (dolist (module module-list)
+        (let* ((output (shell-command-to-string (format "csi -q -w -e \"(use %s)(display (map car (##sys#macro-environment)))(display (map car (##sys#current-environment)))\"" module)))
+               (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\),'`<>:]+[^ ]*" "" output)))
+          (setq symbols (concat cleaned " " symbols))
+          (message (format "Retrieved symbols from Chicken Module %s" module))))
+      ;; (message (concat "'(" symbols ")"))
+      ;; (dolist (symbol (split-string symbols))
+      ;;   (message symbol))
+      (chicken-dump-vars-to-file '(symbols) "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el"))
     (delete-dups (eval (read (concat "'(" symbols ")"))))))
 
 (defvar ac-chicken-symbols-candidates-cache '())
@@ -190,7 +226,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
     (symbol . "f")
-    (requires . 3)
+    (requires . 2)
     (document . ac-chicken-doc)
     (cache)))
 
@@ -199,7 +235,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
     (symbol . "f")
-    (requires . 3)
+    (requires . 2)
     (document . ac-chicken-doc)
     (prefix . ,(concat "[^ \t\r\n" chicken-prefix "]*[" chicken-prefix "]\\(.*\\)"))
     (cache)))
