@@ -2,8 +2,8 @@
 
 ;; Copyright 2013 Daniel Leslie
 ;; Author: Daniel Leslie <dan@ironoxide.ca>
-;; URL: http://github.com/dleslie/chicken-scheme.el
-;; Version: 1.0.6
+;; URL: http://github.com/dleslie/chicken-scheme
+;; Version: 1.1.0
 
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
@@ -45,13 +45,19 @@
 ;;
 ;; (require 'chicken-scheme)
 ;;
+;; Two Auto-Complete sources are available:
+;;   ac-source-chicken-symbols
+;;   ac-source-chicken-symbols-prefixed
+;;
+;; Prefixed symbols are those which have been mutated after importing a library.
+;; See the chicken-prefix custom variable for customization options.
+;;
 ;; I recommend you also add the following:
 ;;
 ;; (add-hook 'scheme-mode-hook 'enable-paredit-mode)
 ;; (add-hook 'scheme-mode-hook 'rainbow-delimiters-mode-enable)
 
 
-(require 'auto-complete)
 (require 'scheme)
 
 ;;; Code:
@@ -78,8 +84,6 @@
 ;   (setq del-list '())
     (dolist (del-elem del-list)
       (delete del-elem module-list)))
-                       
-(provide 'my-elisp)
 
 (defun chicken-installed-modules ()
   "Use chicken-status to discover all installed Chicken modules."
@@ -155,9 +159,6 @@ Argument MODULE-LIST The modules to extract symbols from."
                (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\),'`<>:]+[^ ]*" "" output)))
           (setq symbols (concat cleaned " " symbols))
           (message (format "Retrieved symbols from Chicken Module %s" module))))
-      ;; (message (concat "'(" symbols ")"))
-      ;; (dolist (symbol (split-string symbols))
-      ;;   (message symbol))
       (chicken-dump-vars-to-file '(symbols) "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el"))
     (delete-dups (eval (read (concat "'(" symbols ")"))))))
 
@@ -248,13 +249,6 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   (font-lock-refresh-defaults)
   (if chicken-scheme-tags-file
       (chicken-load-tags chicken-scheme-tags-file))
-  (make-local-variable 'ac-sources)
-  (setq ac-sources
-        (append ac-sources
-                '(ac-source-chicken-symbols
-                  ac-source-chicken-symbols-prefixed
-                  ac-source-words-in-buffer
-                  )))
   (message "Chicken Scheme ready."))
 
 (defun chicken-show-help ()
