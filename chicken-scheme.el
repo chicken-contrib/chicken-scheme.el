@@ -38,16 +38,10 @@
 ;; are parsed for symbols on first-load. All subsequent scheme files do not
 ;; incur this load hitch. Consider running an Emacs daemon.
 ;;
-;; Tags are also supported. 
-;;
 ;; Installation:
 ;; Place in your load path. Add the following to your .emacs:
 ;;
 ;; (require 'chicken-scheme)
-;;
-;; Two Auto-Complete sources are available:
-;;   ac-source-chicken-symbols
-;;   ac-source-chicken-symbols-prefixed
 ;;
 ;; Prefixed symbols are those which have been mutated after importing a library.
 ;; See the chicken-prefix custom variable for customization options.
@@ -79,9 +73,7 @@
                buffer)))
                
 (defun chicken-remove-error-module (module-list)    
-;   (setq del-list '("library" "foreign" "iup" "iup-glcanvas" "iup-pplot" "iup-dialogs" "iup-controls" "iup-base" "canvas-draw-iup" "canvas-draw-gl"))
     (setq del-list '("library" "foreign"))
-;   (setq del-list '())
     (dolist (del-elem del-list)
       (delete del-elem module-list)))
 
@@ -103,11 +95,6 @@
 
 (defgroup chicken-scheme
   nil "Chicken Scheme Extensions")
-
-(defcustom chicken-scheme-tags-file ()
-  "Extra tags file to load for pattern matching and syntax hilighting."
-  :type 'file
-  :group 'chicken-scheme)
 
 (defcustom chicken-ac-modules (chicken-installed-modules)
   "Modules to load symbols from for `auto-complete'."
@@ -202,17 +189,6 @@
 			       truncate-quotient truncate/ unless unquote-splicing values
 			       vector->list vector-append vector-copy! vector-for-each vector-map
 			       vector-set! when write-bytevector write-string zero?))
-
-(defun chicken-load-tags (scheme-tags-location)
-  "Load tag file entries into the tag table and inject them into font-lock.
-Argument SCHEME-TAGS-LOCATION The tags file from which to extract the tags."
-  (interactive)
-  (let ((existing-tags tags-table-list))
-    (setq tags-table-list nil)
-    (visit-tags-table scheme-tags-location)
-    ;(tags-completion-table)
-    (setq tags-table-list existing-tags))
-  t)
 
 (defun chicken-load-symbols (module-list)
   "Load symbols from Chicken.
@@ -317,8 +293,9 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   (font-lock-mode)
   (chicken-load-font-lock-keywords)
   (font-lock-refresh-defaults)
-  (if chicken-scheme-tags-file
-      (chicken-load-tags chicken-scheme-tags-file))
+  (make-local-variable 'ac-sources)
+  (add-to-list 'ac-sources 'ac-source-chicken-symbols)
+  (add-to-list 'ac-sources 'ac-source-chicken-symbols-prefixed)
   (message "Chicken Scheme ready."))
 
 (defun chicken-show-help ()
