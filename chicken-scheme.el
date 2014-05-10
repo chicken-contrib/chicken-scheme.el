@@ -3,7 +3,7 @@
 ;; Copyright 2013 Daniel Leslie
 ;; Author: Daniel Leslie <dan@ironoxide.ca>
 ;; URL: http://github.com/dleslie/chicken-scheme
-;; Version: 1.1.0
+;; Version: 1.2.0
 
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
@@ -132,7 +132,76 @@
   :group 'chicken-scheme)
 
 ;; Hardcoded r5rs-symbols
-(defvar r5rs-symbols '(abs acos and angle append apply asin assoc assq assv atan begin boolean? caar cadr call-with-current-continuation call-with-input-file call-with-output-file call-with-values car case cdddar cddddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? close-input-port close-output-port complex? cond cons cos current-input-port current-output-port define define-syntax delay denominator display do dynamic-wind else eof-object? eq? equal? eqv? eval even? exact->inexact exact? exp expt floor for-each force gcd if imag-part inexact->exact inexact? input-port? integer->char integer? interaction-environment lambda lcm length let let* let-syntax letrec letrec-syntax list list->string list->vector list-ref list-tail list? load log magnitude make-polar make-rectangular make-string make-vector map max member memq memv min modulo negative? newline not null-environment null? number->string number? numerator odd? open-input-file open-output-file or output-port? pair? peek-char port? positive? procedure? quasiquote quote quotient rational? rationalize read read-char real-part real? remainder reverse round scheme-report-environment set! set-car! set-cdr! setcar sin sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-length string-ref string-set! string<=? string<? string=? string>=? string>? string? substring symbol->string symbol? syntax-rules tan transcript-off transcript-on truncate values vector vector->list vector-fill! vector-length vector-ref vector-set! vector? with-input-from-file with-output-to-file write write-char zero?))
+(defvar r5rs-symbols '(abs acos and angle append apply asin assoc assq assv atan begin 
+			   boolean? caar cadr call-with-current-continuation 
+			   call-with-input-file call-with-output-file call-with-values 
+			   car case cdddar cddddr cdr ceiling char->integer char-alphabetic?
+			   char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase
+			   char-lower-case? char-numeric? char-ready? char-upcase
+			   char-upper-case? char-whitespace? char<=? char<? char=? char>=?
+			   char>? char? close-input-port close-output-port complex? cond cons
+			   cos current-input-port current-output-port define define-syntax
+			   delay denominator display do dynamic-wind else eof-object? eq?
+			   equal? eqv? eval even? exact->inexact exact? exp expt floor
+			   for-each force gcd if imag-part inexact->exact inexact? input-port?
+			   integer->char integer? interaction-environment lambda lcm length
+			   let let* let-syntax letrec letrec-syntax list list->string 
+			   list->vector list-ref list-tail list? load log magnitude make-polar
+			   make-rectangular make-string make-vector map max member memq memv 
+			   min modulo negative? newline not null-environment null? 
+			   number->string number? numerator odd? open-input-file 
+			   open-output-file or output-port? pair? peek-char port? positive? 
+			   procedure? quasiquote quote quotient rational? rationalize read 
+			   read-char real-part real? remainder reverse round 
+			   scheme-report-environment set! set-car! set-cdr! setcar sin sqrt 
+			   string string->list string->number string->symbol string-append 
+			   string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? 
+			   string-copy string-fill! string-length string-ref string-set! 
+			   string<=? string<? string=? string>=? string>? string? substring 
+			   symbol->string symbol? syntax-rules tan transcript-off transcript-on 
+			   truncate values vector vector->list vector-fill! vector-length 
+			   vector-ref vector-set! vector? with-input-from-file with-output-to-file 
+			   write write-char zero?))
+
+(defvar r7rs-small-symbols '(* + - ... / < <= = => > >= abs and append apply assoc assq
+			       assv begin binary-port? boolean=? boolean? bytevector
+			       bytevector-append bytevector-copy bytevector-copy! bytevector-length
+			       bytevector-u8-ref bytevector-u8-set! bytevector? caar cadr
+			       call-with-current-continuation call-with-port call-with-values call/cc
+			       car case cdar cddr cdr ceiling char->integer char-ready? char<=?
+			       char<? char=? char>=? char>? char? close-input-port
+			       close-output-port close-port complex? cond cond-expand cons
+			       current-error-port current-input-port current-output-port
+			       define define-record-type define-syntax define-values denominator do
+			       dynamic-wind else eof-object? equal? error error-object-message
+			       even? exact-integer-sqrt exact? features floor floor-remainder
+			       flush-output-port gcd get-output-string if include-ci inexact?
+			       input-port? integer? lcm let let*-values let-values letrec* list
+			       list->vector list-ref list-tail make-bytevector make-parameter
+			       make-vector max memq min negative? not number->string numerator
+			       open-input-bytevector open-output-bytevector or output-port?
+			       parameterize peek-u8 positive? quasiquote quotient raise-continuable
+			       rationalize read-bytevector! read-error? read-string real? reverse
+			       set! set-cdr! string string->number string->utf8 string-append
+			       eof-object eq? eqv? error-object-irritants error-object? exact
+			       exact-integer? expt file-error? floor-quotient floor/ for-each
+			       get-output-bytevector guard include inexact input-port-open?
+			       integer->char lambda length let* let-syntax letrec letrec-syntax
+			       list->string list-copy list-set! list? make-list make-string map
+			       member memv modulo newline null? number? odd? open-input-string
+			       open-output-string output-port-open? pair? peek-char port?
+			       procedure? quote raise rational? read-bytevector read-char read-line
+			       read-u8 remainder round set-car! square string->list string->symbol
+			       string->vector string-copy string-copy! string-for-each string-map
+			       string-set! string<? string>=? string? symbol->string symbol?
+			       syntax-rules truncate truncate-remainder u8-ready? unquote
+			       utf8->string vector vector->string vector-copy vector-fill!
+			       vector-length vector-ref vector? with-exception-handler write-char
+			       write-u8 string-fill! string-length string-ref string<=?
+			       string=? string>? substring symbol=? syntax-error textual-port?
+			       truncate-quotient truncate/ unless unquote-splicing values
+			       vector->list vector-append vector-copy! vector-for-each vector-map
+			       vector-set! when write-bytevector write-string zero?))
 
 (defun chicken-load-tags (scheme-tags-location)
   "Load tag file entries into the tag table and inject them into font-lock.
@@ -150,16 +219,16 @@ Argument SCHEME-TAGS-LOCATION The tags file from which to extract the tags."
 Argument MODULE-LIST The modules to extract symbols from."
   (let ((symbols))
     (chicken-remove-error-module module-list)
-    (if (file-exists-p "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el")
+    (if (file-exists-p "~/.emacs.d/.chicken-scheme-symbols-dump.el")
       (progn
-          (message "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el exist, load it.")
-          (load "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el"))
+          (message "~/.emacs.d/.chicken-scheme-symbols-dump.el exist, load it.")
+          (load "~/.emacs.d/.chicken-scheme-symbols-dump.el"))
       (dolist (module module-list)
         (let* ((output (shell-command-to-string (format "csi -q -w -e \"(use %s)(display (map car (##sys#macro-environment)))(display (map car (##sys#current-environment)))\"" module)))
                (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\),'`<>:]+[^ ]*" "" output)))
           (setq symbols (concat cleaned " " symbols))
           (message (format "Retrieved symbols from Chicken Module %s" module))))
-      (chicken-dump-vars-to-file '(symbols) "~/.emacs.d/.Dans-chicken-scheme-symbols-dump.el"))
+      (chicken-dump-vars-to-file '(symbols) "~/.emacs.d/.chicken-scheme-symbols-dump.el"))
     (delete-dups (eval (read (concat "'(" symbols ")"))))))
 
 (defvar ac-chicken-symbols-candidates-cache '())
@@ -176,7 +245,8 @@ Argument MODULE-LIST The modules to extract symbols from."
                                          (cons n n))
                                      (wrong-type-argument '())))
                                (chicken-load-symbols chicken-ac-modules))))))
-  (cdr ac-chicken-symbols-candidates-cache))
+  (append (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) (append r7rs-small-symbols r5rs-symbols))
+	  (cdr ac-chicken-symbols-candidates-cache)))
 
 (defun ac-chicken-doc (symbol-name)
   "Use chicken-doc to recover documentation for a given symbol.
