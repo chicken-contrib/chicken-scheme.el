@@ -3,7 +3,7 @@
 ;; Copyright 2014 Daniel Leslie
 ;; Author: Daniel Leslie <dan@ironoxide.ca>
 ;; URL: http://github.com/dleslie/chicken-scheme
-;; Version: 1.3.0
+;; Version: 1.3.1
 ;;
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
@@ -204,20 +204,30 @@
 			       vector->list vector-append vector-copy! vector-for-each vector-map
 			       vector-set! when write-bytevector write-string zero?))
 
+(defvar chicken-builtin-symbols 
+  '(and-let* assume compiler-typecase cond-expand condition-case cut cute declare define-constant
+	     define-inline define-interface define-record define-record-type define-specialization
+	     define-syntax-rule define-type define-values dotimes ecase fluid-let foreign-lambda
+	     foreign-lambda* foreign-primitive foreign-safe-lambda foreign-safe-lambda* functor
+	     handle-exceptions import let*-values let-location let-optionals let-optionals*
+	     let-values letrec* letrec-values match-letrec module parameterize regex-case
+	     require-extension select set! unless use when with-input-from-pipe match
+	     match-lambda match-lambda* match-let match-let* receive))
+
 (defun chicken-load-symbols (module-list)
   "Load symbols from Chicken.
 Argument MODULE-LIST The modules to extract symbols from."
   (let ((symbols))
     (chicken-remove-error-module module-list)
     (if (file-exists-p "~/.emacs.d/.chicken-scheme-symbols-dump.el")
-      (progn
-          (message "~/.emacs.d/.chicken-scheme-symbols-dump.el exist, load it.")
-          (load "~/.emacs.d/.chicken-scheme-symbols-dump.el"))
+	(progn
+	  (message "~/.emacs.d/.chicken-scheme-symbols-dump.el exist, load it.")
+	  (load "~/.emacs.d/.chicken-scheme-symbols-dump.el"))
       (dolist (module module-list)
-        (let* ((output (shell-command-to-string (format "csi -q -w -e \"(use %s)(display (map car (##sys#macro-environment)))(display (map car (##sys#current-environment)))\"" module)))
-               (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\),'`<>:]+[^ ]*" "" output)))
-          (setq symbols (concat cleaned " " symbols))
-          (message (format "Retrieved symbols from Chicken Module %s" module))))
+	(let* ((output (shell-command-to-string (format "csi -q -w -e \"(use %s)(display (map car (##sys#macro-environment)))(display (map car (##sys#current-environment)))\"" module)))
+	       (cleaned (replace-regexp-in-string "[^ ]*[\]\[#.\(\),'`<>:]+[^ ]*" "" output)))
+	  (setq symbols (concat cleaned " " symbols))
+	  (message (format "Retrieved symbols from Chicken Module %s" module))))
       (chicken-dump-vars-to-file '(symbols) "~/.emacs.d/.chicken-scheme-symbols-dump.el"))
     (delete-dups (eval (read (concat "'(" symbols ")"))))))
 
@@ -235,7 +245,8 @@ Argument MODULE-LIST The modules to extract symbols from."
                                          (cons n n))
                                      (wrong-type-argument '())))
                                (chicken-load-symbols chicken-ac-modules))))))
-  (cdr ac-chicken-symbols-candidates-cache))
+  (cdr ac-chicken-symbols-candidates-cache
+       (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) chicken-builtin-symbols)))
 
 (defun ac-r5rs-candidates ()
   "Provides completion candidates for R5RS symbols"
@@ -244,6 +255,8 @@ Argument MODULE-LIST The modules to extract symbols from."
 (defun ac-r7rs-candidates ()
   "Provides completion candidates for R7RS symbols"
   (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) r7rs-small-symbols))
+
+
 
 (defun ac-chicken-doc (symbol-name)
   "Use chicken-doc to recover documentation for a given symbol.
