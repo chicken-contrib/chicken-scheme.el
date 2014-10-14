@@ -1,17 +1,13 @@
 ;;; chicken-scheme.el --- Scheme-mode extensions for Chicken Scheme
-
-;; Copyright 2013 Daniel Leslie
+;;
+;; Copyright 2014 Daniel Leslie
 ;; Author: Daniel Leslie <dan@ironoxide.ca>
 ;; URL: http://github.com/dleslie/chicken-scheme
 ;; Version: 1.3.0
-
+;;
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
-
-;;; Contributors:
-;; Dan Leslie
-;; Mao Junhua - Disk Caching
-
+;;
 ;;; Commentary:
 ;; A suite of extensions for scheme-mode that grew out of necessity.
 ;;
@@ -24,13 +20,13 @@
 ;; variables are available to configure from which modules symbols should be
 ;; loaded and what sort of package prefixes can be expected.
 ;;
-;; Auto-complete sources are available for prefixed symbols, to allow for
+;; Auto-complete is configured to support prefixed symbols, to allow for
 ;; full recognition of symbols in modules that may have been imported with a
 ;; prefix modifier. The `chicken-prefix` variable may be customized to declare
 ;; what characters can be used as prefix delimiters.
 ;;
-;; chicken-show-help will fetch documentation for the symbol at the
-;; current point. This obeys the prefix rules used for auto-complete.
+;; Calling documentation for the symbol at the current point is possible with:
+;; chicken-show-help
 ;;
 ;; Further customization is available in the chicken-scheme customization group.
 ;;
@@ -42,6 +38,19 @@
 ;; Place in your load path. Add the following to your .emacs:
 ;;
 ;; (require 'chicken-scheme)
+;; (add-hook 'scheme-mode-hook 'setup-chicken-scheme)
+;; (define-key scheme-mode-map (kbd "C-?") 'chicken-show-help)
+;;
+;; If you don't like auto-complete, or don't want to have both R7RS and R5RS
+;; symbols loaded, then don't add the setup-chicken-scheme hook. Instead,
+;; the following utilities are available:
+;;
+;; ac-source-chicken-symbols
+;; ac-source-r5rs-symbols
+;; ac-source-r7rs-symbols
+;; ac-source-chicken-symbols-prefixed
+;; chicken-show-help
+;; chicken-fix-font-lock
 ;;
 ;; Prefixed symbols are those which have been mutated after importing a library.
 ;; See the chicken-prefix custom variable for customization options.
@@ -50,12 +59,12 @@
 ;;
 ;; (add-hook 'scheme-mode-hook 'enable-paredit-mode)
 ;; (add-hook 'scheme-mode-hook 'rainbow-delimiters-mode-enable)
-;; (define-key scheme-mode-map (kbd "C-?") 'chicken-show-help)
 ;;
-;; Provides the following auto-complete sources: (disabled by default)
-;; ac-source-chicken-symbols
-;; ac-source-chicken-symbols-prefixed
-;; ac-source-scheme-symbols
+;; This packages plays very well with the chicken-slime package.
+;;
+;;; Contributors:
+;; Dan Leslie
+;; Mao Junhua - Disk Caching
 
 (require 'scheme)
 
@@ -195,11 +204,6 @@
 			       vector->list vector-append vector-copy! vector-for-each vector-map
 			       vector-set! when write-bytevector write-string zero?))
 
-(defcustom ac-scheme-symbol-source (append r7rs-small-symbols r5rs-symbols)
-  "The list of symbols from which builtin scheme symbols will be sourced"
-  :group 'chicken-scheme
-  :type '(list symbol))
-
 (defun chicken-load-symbols (module-list)
   "Load symbols from Chicken.
 Argument MODULE-LIST The modules to extract symbols from."
@@ -230,11 +234,16 @@ Argument MODULE-LIST The modules to extract symbols from."
                                        (let ((n (symbol-name s)))
                                          (cons n n))
                                      (wrong-type-argument '())))
-                               (chicken-load-symbols chicken-ac-modules)))))))
+                               (chicken-load-symbols chicken-ac-modules))))))
+  (cdr ac-chicken-symbols-candidates-cache))
 
-(defun ac-scheme-symbols-candidates ()
-  "AC candidates for scheme symbols"
-  (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) ac-scheme-symbol-source))
+(defun ac-r5rs-candidates ()
+  "Provides completion candidates for R5RS symbols"
+  (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) r5rs-symbols))
+
+(defun ac-r7rs-candidates ()
+  "Provides completion candidates for R7RS symbols"
+  (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) r7rs-small-symbols))
 
 (defun ac-chicken-doc (symbol-name)
   "Use chicken-doc to recover documentation for a given symbol.
@@ -266,7 +275,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
          scheme-font-lock-keywords-1
          scheme-font-lock-keywords-2
          (eval-when-compile
-           (let* ((kw (sort (mapcar (lambda (p) (car p)) (ac-chicken-symbols-candidates)) 'string<))
+           (let* ((kw (sort (mapcar (lambda (p) (car p)) (append (ac-chicken-symbols-candidates) (ac-r5rs-candidates) (ac-r7rs-candidates))) 'string<))
                   (nkw (length kw))
                   (step 100))
              (loop
@@ -280,12 +289,19 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
               finally
               return result))))))
 
-(defvar ac-source-scheme-symbols
-  '((candidates . ac-scheme-symbols-candidates)
+(defvar ac-source-r5rs-symbols
+  '((candidates . ac-r5rs-candidates)
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
-    (symbol . "b")
-    (document . nil)
+    (symbol . "5")
+    (requires . 1)
+    (cache)))
+
+(defvar ac-source-r7rs-symbols
+  '((candidates . ac-r7rs-candidates)
+    (candidate-face . ac-chicken-scheme-candidate-face)
+    (selection-face . ac-chicken-scheme-selection-face)
+    (symbol . "7")
     (requires . 1)
     (cache)))
 
@@ -293,7 +309,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   '((candidates . ac-chicken-symbols-candidates)
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
-    (symbol . "m")
+    (symbol . "c")
     (requires . 1)
     (document . ac-chicken-doc)
     (cache)))
@@ -302,18 +318,28 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   `((candidates . ac-chicken-symbols-candidates)
     (candidate-face . ac-chicken-scheme-candidate-face)
     (selection-face . ac-chicken-scheme-selection-face)
-    (symbol . "m")
+    (symbol . "c")
     (requires . 1)
     (document . ac-chicken-doc)
     (prefix . ,(concat "[^ \t\r\n" chicken-prefix "]*[" chicken-prefix "]\\(.*\\)"))
     (cache)))
 
-(defun chicken-scheme-hook ()
-  "Hook for Chicken into scheme-mode."
+(defun chicken-fix-font-lock ()
+  "Sets the font-lock for chicken keywords"
   (interactive)
   (font-lock-mode)
   (chicken-load-font-lock-keywords)
-  (font-lock-refresh-defaults)
+  (font-lock-refresh-defaults))
+
+(defun setup-chicken-scheme ()
+  "Hook for Chicken into scheme-mode."
+  (interactive)
+  (chicken-fix-font-lock)
+  (make-local-variable 'ac-sources)
+  (add-to-list 'ac-sources 'ac-source-chicken-symbols)
+  (add-to-list 'ac-sources 'ac-source-r5rs-symbols)
+  (add-to-list 'ac-sources 'ac-source-r7rs-symbols)
+  (add-to-list 'ac-sources 'ac-source-chicken-symbols-prefixed)
   (message "Chicken Scheme ready."))
 
 (defun chicken-show-help ()
@@ -325,7 +351,6 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
              "" 
              (symbol-name (symbol-at-point))))))
 
-(add-hook 'scheme-mode-hook 'chicken-scheme-hook)
 
 (provide 'chicken-scheme)
 
