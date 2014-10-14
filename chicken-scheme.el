@@ -245,8 +245,8 @@ Argument MODULE-LIST The modules to extract symbols from."
                                          (cons n n))
                                      (wrong-type-argument '())))
                                (chicken-load-symbols chicken-ac-modules))))))
-  (cdr ac-chicken-symbols-candidates-cache
-       (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) chicken-builtin-symbols)))
+  (cdr (append ac-chicken-symbols-candidates-cache
+	       (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) chicken-builtin-symbols))))
 
 (defun ac-r5rs-candidates ()
   "Provides completion candidates for R5RS symbols"
