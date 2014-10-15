@@ -3,7 +3,7 @@
 ;; Copyright 2014 Daniel Leslie
 ;; Author: Daniel Leslie <dan@ironoxide.ca>
 ;; URL: http://github.com/dleslie/chicken-scheme
-;; Version: 1.3.1
+;; Version: 1.3.0
 ;;
 ;; Licensed under the GPL3
 ;; A copy of the license can be found at the above URL
@@ -85,11 +85,11 @@
   (loop for var in varlist do
         (print (list 'setq var (list 'quote (symbol-value var)))
                buffer)))
-               
+
 (defun chicken-remove-error-module (module-list)    
-    (setq del-list '("library" "foreign"))
-    (dolist (del-elem del-list)
-      (delete del-elem module-list)))
+  (setq del-list '("library" "foreign"))
+  (dolist (del-elem del-list)
+    (delete del-elem module-list)))
 
 (defun chicken-installed-modules ()
   "Use chicken-status to discover all installed Chicken modules."
@@ -116,7 +116,7 @@
   :group 'chicken-scheme)
 
 (defcustom chicken-prefix
-  ;"[^:#]*[:#]\\(.*\\)"
+					;"[^:#]*[:#]\\(.*\\)"
   ":#"
   "Defines the characters to use to identify the prefix separator that may be present for autocomplete matches.  Defaults to : and #."
   :type 'string
@@ -245,8 +245,8 @@ Argument MODULE-LIST The modules to extract symbols from."
                                          (cons n n))
                                      (wrong-type-argument '())))
                                (chicken-load-symbols chicken-ac-modules))))))
-  (cdr (append ac-chicken-symbols-candidates-cache
-	       (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) chicken-builtin-symbols))))
+  (cdr ac-chicken-symbols-candidates-cache
+       (mapcar (lambda (s) (cons (symbol-name s) (symbol-name s))) chicken-builtin-symbols)))
 
 (defun ac-r5rs-candidates ()
   "Provides completion candidates for R5RS symbols"
@@ -264,19 +264,19 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   (shell-command-to-string (format "chicken-doc %s" (substring-no-properties symbol-name))))
 
 (defconst chicken-scheme-font-lock-keywords '() 
-   "Extended highlighting for Scheme modes using Chicken keywords.")
+  "Extended highlighting for Scheme modes using Chicken keywords.")
 
 (defun chicken-load-font-lock-keywords ()
   "Load chicken keywords into font-lock."
   (interactive)
   (setq font-lock-defaults 
-         `((chicken-scheme-font-lock-keywords) 
-           nil ; don't do strings and comments
-           nil ; don't do case sensitive
-           ((,(replace-regexp-in-string (concat "[" chicken-prefix "]") "a" "+-*/.<>=!?$%_&~^:") . "w")) 
-           beginning-of-defun 
-           (font-lock-mark-block-function . mark-defun)
-           ))
+	`((chicken-scheme-font-lock-keywords) 
+	  nil ; don't do strings and comments
+	  nil ; don't do case sensitive
+	  ((,(replace-regexp-in-string (concat "[" chicken-prefix "]") "a" "+-*/.<>=!?$%_&~^:") . "w")) 
+	  beginning-of-defun 
+	  (font-lock-mark-block-function . mark-defun)
+	  ))
   (if (equal nil chicken-scheme-font-lock-keywords)
       (chicken-cache-font-lock-keywords)))
 
@@ -285,22 +285,22 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
   (message "Caching Chicken font-lock-keywords")
   (setq chicken-scheme-font-lock-keywords
         (append '()
-         scheme-font-lock-keywords-1
-         scheme-font-lock-keywords-2
-         (eval-when-compile
-           (let* ((kw (sort (mapcar (lambda (p) (car p)) (append (ac-chicken-symbols-candidates) (ac-r5rs-candidates) (ac-r7rs-candidates))) 'string<))
-                  (nkw (length kw))
-                  (step 100))
-             (loop
-              with result = '()
-              for ptr from 0 by step
-              while (< ptr nkw)
-              do
-              (let ((window (last (butlast kw (- nkw (+ ptr step))) step)))
-                (setq result (append result 
-                                     (list `(,(regexp-opt window 'words)  (1 font-lock-builtin-face))))))
-              finally
-              return result))))))
+		scheme-font-lock-keywords-1
+		scheme-font-lock-keywords-2
+		(eval-when-compile
+		  (let* ((kw (sort (mapcar (lambda (p) (car p)) (append (ac-chicken-symbols-candidates) (ac-r5rs-candidates) (ac-r7rs-candidates))) 'string<))
+			 (nkw (length kw))
+			 (step 100))
+		    (loop
+		     with result = '()
+		     for ptr from 0 by step
+		     while (< ptr nkw)
+		     do
+		     (let ((window (last (butlast kw (- nkw (+ ptr step))) step)))
+		       (setq result (append result 
+					    (list `(,(regexp-opt window 'words)  (1 font-lock-builtin-face))))))
+		     finally
+		     return result))))))
 
 (defvar ac-source-r5rs-symbols
   '((candidates . ac-r5rs-candidates)
