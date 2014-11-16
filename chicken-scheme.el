@@ -340,9 +340,7 @@ Argument SYMBOL-NAME The symbol to recover documentation for."
 (defun chicken-fix-font-lock ()
   "Sets the font-lock for chicken keywords"
   (interactive)
-  (font-lock-mode)
-  (chicken-load-font-lock-keywords)
-  (font-lock-refresh-defaults))
+  (chicken-load-font-lock-keywords))
 
 (defun setup-chicken-scheme ()
   "Hook for Chicken into scheme-mode."
